@@ -2,8 +2,12 @@ package org.bank.account;
 
 import org.bank.account.exception.NegativeAmountException;
 import org.bank.account.exception.NotEnoughMoneyException;
+import org.bank.account.operation.Operation;
+import org.bank.account.operation.OperationType;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,22 +85,68 @@ public class AccountTest {
         withdrawMoney(provisionedAccount, -35.5);
     }
 
+    @Test
+    public void when_withdrawing_money_should_add_to_history() throws NegativeAmountException, NotEnoughMoneyException {
+        List<Operation> accountHistory = provisionedAccount.getHistory();
+        Operation expectedAccountHistoryOperation = new Operation(OperationType.WITHDRAW, 10, provisionedAccount.getBalance() - 10);
+
+        assertThat(accountHistory).hasSize(0);
+
+        provisionedAccount.withdraw(10);
+
+        assertThat(accountHistory).hasSize(1);
+        assertThat(accountHistory.get(0)).isEqualTo(expectedAccountHistoryOperation);
+    }
+
+    @Test
+    public void when_deposing_money_should_add_to_history() throws NegativeAmountException {
+        List<Operation> accountHistory = provisionedAccount.getHistory();
+        Operation expectedAccountHistoryOperation = new Operation(OperationType.DEPOSIT, 10, provisionedAccount.getBalance() + 10);
+
+        assertThat(accountHistory).hasSize(0);
+
+        provisionedAccount.deposit(10);
+
+        assertThat(accountHistory).hasSize(1);
+        assertThat(accountHistory.get(0)).isEqualTo(expectedAccountHistoryOperation);
+    }
+
+    @Test
+    public void when_deposing_and_withdrawing_money_should_add_to_history() throws NegativeAmountException, NotEnoughMoneyException {
+        List<Operation> accountHistory = provisionedAccount.getHistory();
+        Operation expectedDepositAccountHistoryOperation = new Operation(OperationType.DEPOSIT, 10, provisionedAccount.getBalance() + 10);
+
+        assertThat(accountHistory).hasSize(0);
+
+        provisionedAccount.deposit(10);
+
+        assertThat(accountHistory).hasSize(1);
+        assertThat(accountHistory.get(0)).isEqualTo(expectedDepositAccountHistoryOperation);
+
+        Operation expectedWithdrawAccountHistoryOperation = new Operation(OperationType.WITHDRAW, 10, provisionedAccount.getBalance() - 10);
+
+        provisionedAccount.withdraw(10);
+
+        assertThat(accountHistory).hasSize(2);
+        assertThat(accountHistory.get(1)).isEqualTo(expectedWithdrawAccountHistoryOperation);
+    }
+
     private void deposingMoney(Account account, double amountToDeposit) throws NegativeAmountException {
-        double originalBalance = account.getAmount();
+        double originalBalance = account.getBalance();
 
         account.deposit(amountToDeposit);
 
-        double finalBalance = account.getAmount();
+        double finalBalance = account.getBalance();
 
         assertThat(finalBalance).isEqualTo(originalBalance + amountToDeposit);
     }
 
     private void withdrawMoney(Account account, double amountToWithdraw) throws NegativeAmountException, NotEnoughMoneyException {
-        double originalBalance = account.getAmount();
+        double originalBalance = account.getBalance();
 
         account.withdraw(amountToWithdraw);
 
-        double finalBalance = account.getAmount();
+        double finalBalance = account.getBalance();
 
         assertThat(finalBalance).isEqualTo(originalBalance - amountToWithdraw);
     }
